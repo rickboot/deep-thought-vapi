@@ -12,17 +12,14 @@ interface Message {
 interface UseVapiReturn {
   isConnected: boolean;
   isSpeaking: boolean;
-  isMuted: boolean;
   messages: Message[];
   startCall: () => void;
   endCall: () => void;
-  toggleMute: () => void;
 }
 
 export const useVapi = (): UseVapiReturn => {
   const [isConnected, setIsConnected] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
 
   const vapiRef = useRef<Vapi | null>(null);
@@ -120,21 +117,11 @@ export const useVapi = (): UseVapiReturn => {
     }
   }, []);
 
-  const toggleMute = useCallback(() => {
-    if (vapiRef.current) {
-      const newMutedState = !isMuted;
-      vapiRef.current.setMuted(newMutedState);
-      setIsMuted(newMutedState);
-    }
-  }, [isMuted]);
-
   return {
     isConnected,
     isSpeaking,
-    isMuted,
     messages,
     startCall,
     endCall,
-    toggleMute,
   };
 };
