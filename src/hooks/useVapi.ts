@@ -24,10 +24,10 @@ export const useVapi = (): UseVapiReturn => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
+  
   const vapiRef = useRef<Vapi | null>(null);
 
   const registerVapiListeners = useCallback((vapi: Vapi) => {
-
     vapi.on('call-start', () => setIsConnected(true));
 
     vapi.on('call-end', () => {
@@ -46,23 +46,18 @@ export const useVapi = (): UseVapiReturn => {
     });
 
     vapi.on('message', (message: any) => {
-      console.log('Message received:', message);
+      if (message.type === 'transcript' || message.type === 'conversation-update') {
+        console.log('Message received:', message);
+      }
 
-      if (message.type === 'transcript' && message.transcriptType === 'final') {
+      if (message.type === 'transcript') {
+        console.log('MESSAGE TEXT', message.role)
+
         setMessages((prev) => [
           ...prev,
           {
-            type: 'user',
+            type: message.role,
             content: message.transcript,
-            timestamp: Date.now(),
-          },
-        ]);
-      } else if (message.type === 'assistant-message') {
-        setMessages((prev) => [
-          ...prev,
-          {
-            type: 'assistant',
-            content: message.message,
             timestamp: Date.now(),
           },
         ]);
@@ -84,7 +79,6 @@ export const useVapi = (): UseVapiReturn => {
 
     vapiRef.current = new Vapi(apiKey);
     const vapi = vapiRef.current;
-
     registerVapiListeners(vapi);
 
     return () => {
