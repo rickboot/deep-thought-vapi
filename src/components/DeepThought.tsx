@@ -4,9 +4,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Mic, VolumeX, Zap } from 'lucide-react';
 import { useVapi } from '@/hooks/useVapi';
+import { useEffect, useRef } from 'react';
 
 function DeepThought() {
   const { isConnected, messages, startCall, endCall } = useVapi();
+  const endOfMessagesRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   return (
     <div className="min-h-screen bg-[var(--background)] p-6">
@@ -84,6 +90,7 @@ function DeepThought() {
                   </div>
                 </div>
               ))}
+              <div ref={endOfMessagesRef} />
             </div>
           </CardContent>
         </Card>

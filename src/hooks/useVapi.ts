@@ -24,7 +24,7 @@ export const useVapi = (): UseVapiReturn => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
-  
+
   const vapiRef = useRef<Vapi | null>(null);
 
   const registerVapiListeners = useCallback((vapi: Vapi) => {
@@ -51,7 +51,7 @@ export const useVapi = (): UseVapiReturn => {
       }
 
       if (message.type === 'transcript') {
-        console.log('MESSAGE TEXT', message.role)
+        console.log('MESSAGE TEXT', message.role);
 
         setMessages((prev) => [
           ...prev,
@@ -79,15 +79,16 @@ export const useVapi = (): UseVapiReturn => {
 
     vapiRef.current = new Vapi(apiKey);
     const vapi = vapiRef.current;
+
     registerVapiListeners(vapi);
+
+    setMessages([]);
 
     return () => {
       if (vapiRef.current) {
         vapiRef.current.stop();
       }
     };
-
-
   }, [registerVapiListeners]);
 
   const startCall = useCallback(() => {
@@ -100,7 +101,7 @@ export const useVapi = (): UseVapiReturn => {
         messages: [
           {
             role: 'system',
-            content: SYSTEM_PROMPT
+            content: SYSTEM_PROMPT,
           },
         ],
       },
@@ -109,7 +110,7 @@ export const useVapi = (): UseVapiReturn => {
         voiceId: 'draco',
         model: 'aura-2',
       },
-      firstMessage: DEEP_THOUGHT_GREETING
+      firstMessage: DEEP_THOUGHT_GREETING,
     });
   }, []);
 
