@@ -4,7 +4,7 @@ import { SYSTEM_PROMPT } from '@/lib/prompts';
 import { DEEP_THOUGHT_GREETING } from '@/lib/constants';
 
 interface Message {
-  type: 'user' | 'assistant';
+  role: 'user' | 'assistant';
   content: string;
   timestamp: number;
 }
@@ -56,7 +56,7 @@ export const useVapi = (): UseVapiReturn => {
         setMessages((prev) => [
           ...prev,
           {
-            type: message.role,
+            role: message.role,
             content: message.transcript,
             timestamp: Date.now(),
           },
