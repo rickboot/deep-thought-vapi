@@ -9,12 +9,6 @@ export interface Message {
   timestamp: number;
 }
 
-// VAPI
-// assistant conversations start
-// user conversations are in orange
-//
-//
-
 export type VapiMessage =
   | {
       type: 'transcript';
@@ -28,7 +22,6 @@ export type VapiMessage =
 
 interface UseVapiReturn {
   isConnected: boolean;
-  isSpeaking: boolean;
   messages: Message[];
   startCall: () => void;
   endCall: () => void;
@@ -36,37 +29,58 @@ interface UseVapiReturn {
 
 export const useVapi = (): UseVapiReturn => {
   const [isConnected, setIsConnected] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [assistantIsSpeaking, setAssistantIsSpeaking] = useState(false);
+  const [userIsSpeaking, setUserIsSpeaking] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [currentMessage, setCurrentMessage] = useState('');
 
   const vapiRef = useRef<Vapi | null>(null);
 
   const registerVapiListeners = useCallback((vapi: Vapi) => {
-    // call start and end
-    vapi.on('call-start', () => setIsConnected(true));
+    //! call start and end
+    vapi.on('call-start', () => {
+      console.log('***************CALL START***************');
+      setIsConnected(true);
+    });
     vapi.on('call-end', () => {
+      console.log('***************CALL END***************');
       setIsConnected(false);
-      setIsSpeaking(false);
+      setAssistantIsSpeaking(false);
     });
 
-    // assistant speech start and end
+    //! assistant speech start
     vapi.on('speech-start', () => {
-      console.log('Speech started');
-      setIsSpeaking(true);
+      console.log('***************SPEECH START***************');
+      setCurrentMessage('');
+      setUserIsSpeaking(false);
+      setAssistantIsSpeaking(true);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: '',
+          timestamp: Date.now(),
+        },
+      ]);
     });
+
+    //! assistant speech end
     vapi.on('speech-end', () => {
-      console.log('Speech ended');
-      setIsSpeaking(false);
+      console.log('***************SPEECH END***************');
+      setAssistantIsSpeaking(false);
     });
 
     // messages - assistant and user
-    // final transcripts represent a complete assistant or user sentence
     vapi.on('message', (message: VapiMessage) => {
-      // if (message.type === 'transcript' && message.transcriptType === 'partial')
-      //   console.log('Partial transcript:', message);
+      console.log('=====MESSAGE=====:', message);
 
       if (message.type === 'transcript' && message.transcriptType === 'final') {
         console.log('Final transcript:', message);
+
+        if (message.role === 'user' && !assistantIsSpeaking) {
+          setUserIsSpeaking(true);
+        }
+
         setMessages((prev) => [
           ...prev,
           {
@@ -75,8 +89,6 @@ export const useVapi = (): UseVapiReturn => {
             timestamp: Date.now(),
           },
         ]);
-      } else if (message.type === 'conversation-update') {
-        console.log('Conversation update:', message);
       }
     });
 
@@ -98,14 +110,18 @@ export const useVapi = (): UseVapiReturn => {
 
     registerVapiListeners(vapi);
 
-    setMessages([]);
-
     return () => {
       if (vapiRef.current) {
         vapiRef.current.stop();
       }
     };
   }, [registerVapiListeners]);
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      messages[messages.length - 1].content = currentMessage;
+    }
+  }, [currentMessage, messages]);
 
   const startCall = useCallback(() => {
     if (!vapiRef.current) return;
@@ -138,7 +154,6 @@ export const useVapi = (): UseVapiReturn => {
 
   return {
     isConnected,
-    isSpeaking,
     messages,
     startCall,
     endCall,
