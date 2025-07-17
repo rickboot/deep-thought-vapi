@@ -9,6 +9,12 @@ export interface Message {
   timestamp: number;
 }
 
+// VAPI
+// assistant conversations start
+// user conversations are in orange
+//
+//
+
 export type VapiMessage =
   | {
       type: 'transcript';
@@ -36,25 +42,31 @@ export const useVapi = (): UseVapiReturn => {
   const vapiRef = useRef<Vapi | null>(null);
 
   const registerVapiListeners = useCallback((vapi: Vapi) => {
+    // call start and end
     vapi.on('call-start', () => setIsConnected(true));
-
     vapi.on('call-end', () => {
       setIsConnected(false);
       setIsSpeaking(false);
     });
 
+    // assistant speech start and end
     vapi.on('speech-start', () => {
       console.log('Speech started');
       setIsSpeaking(true);
     });
-
     vapi.on('speech-end', () => {
       console.log('Speech ended');
       setIsSpeaking(false);
     });
 
+    // messages - assistant and user
+    // final transcripts represent a complete assistant or user sentence
     vapi.on('message', (message: VapiMessage) => {
+      // if (message.type === 'transcript' && message.transcriptType === 'partial')
+      //   console.log('Partial transcript:', message);
+
       if (message.type === 'transcript' && message.transcriptType === 'final') {
+        console.log('Final transcript:', message);
         setMessages((prev) => [
           ...prev,
           {
@@ -64,7 +76,7 @@ export const useVapi = (): UseVapiReturn => {
           },
         ]);
       } else if (message.type === 'conversation-update') {
-        console.log('Message received:', message);
+        console.log('Conversation update:', message);
       }
     });
 
