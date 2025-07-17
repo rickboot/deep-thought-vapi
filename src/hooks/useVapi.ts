@@ -3,10 +3,17 @@ import Vapi from '@vapi-ai/web';
 import { SYSTEM_PROMPT } from '@/lib/prompts';
 import { DEEP_THOUGHT_GREETING } from '@/lib/constants';
 
-interface Message {
+export interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
+}
+
+export interface VapiMessage {
+  type: string;
+  transcriptType?: string;
+  role?: 'user' | 'assistant';
+  transcript?: string;
 }
 
 interface UseVapiReturn {
@@ -42,26 +49,27 @@ export const useVapi = (): UseVapiReturn => {
       setIsSpeaking(false);
     });
 
-    vapi.on('message', (message: any) => {
-      if (message.type === 'transcript' || message.type === 'conversation-update') {
-        console.log('Message received:', message);
-      }
-
-      if (message.type === 'transcript') {
-        console.log('MESSAGE TEXT', message.role);
-
+    vapi.on('message', (message: VapiMessage) => {
+      if (
+        message.type === 'transcript' &&
+        message.transcriptType === 'final' &&
+        message.role &&
+        message.transcript
+      ) {
         setMessages((prev) => [
           ...prev,
           {
             role: message.role,
-            content: message.transcript,
+            content: message.transcript!,
             timestamp: Date.now(),
           },
         ]);
+      } else if (message.type === 'conversation-update') {
+        console.log('Message received:', message);
       }
     });
 
-    vapi.on('error', (error: any) => {
+    vapi.on('error', (error: VapiMessage) => {
       console.error('Vapi error:', error);
     });
   }, []);
