@@ -9,12 +9,16 @@ export interface Message {
   timestamp: number;
 }
 
-export interface VapiMessage {
-  type: string;
-  transcriptType?: string;
-  role?: 'user' | 'assistant';
-  transcript?: string;
-}
+export type VapiMessage =
+  | {
+      type: 'transcript';
+      transcriptType: string;
+      role: 'user' | 'assistant';
+      transcript: string;
+    }
+  | {
+      type: 'conversation-update';
+    };
 
 interface UseVapiReturn {
   isConnected: boolean;
@@ -50,17 +54,12 @@ export const useVapi = (): UseVapiReturn => {
     });
 
     vapi.on('message', (message: VapiMessage) => {
-      if (
-        message.type === 'transcript' &&
-        message.transcriptType === 'final' &&
-        message.role &&
-        message.transcript
-      ) {
+      if (message.type === 'transcript' && message.transcriptType === 'final') {
         setMessages((prev) => [
           ...prev,
           {
             role: message.role,
-            content: message.transcript!,
+            content: message.transcript,
             timestamp: Date.now(),
           },
         ]);
@@ -69,7 +68,7 @@ export const useVapi = (): UseVapiReturn => {
       }
     });
 
-    vapi.on('error', (error: VapiMessage) => {
+    vapi.on('error', (error: Error) => {
       console.error('Vapi error:', error);
     });
   }, []);
